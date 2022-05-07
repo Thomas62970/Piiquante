@@ -26,7 +26,10 @@
     "mongoose-unique-validator": "^3.0.0",
     "multer": "^1.4.4",
     "nodemon": "^2.0.15",
+    "password": "^0.1.1",
+    "password-validator": "^5.2.1",
     "save": "^2.5.0",
-    "system": "^2.0.1"
+    "system": "^2.0.1",
+    "validator": "^13.7.0"
   }
 }

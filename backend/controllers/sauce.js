@@ -1,7 +1,7 @@
 //importation du schema de sauce et de file system
 const Sauce = require('../models/sauces');
 const fs = require('fs');
-//creation et exportation du middleware pour ajouter une sauce (Post)
+//creation et exportation du controllers pour ajouter une sauce (Post)
   exports.createSauce = (req, res, next) => {
     //on récupére les informations dans le champs de la requête
     const sauceObject = JSON.parse(req.body.sauce);
@@ -19,7 +19,7 @@ const fs = require('fs');
       .catch(error => res.status(400).json({ error }));
   };
 
-//creation et exportation du middleware pour récupérer toutes les sauces avec la méthode find
+//creation et exportation du controllers pour récupérer toutes les sauces avec la méthode find
 exports.getAllSauces = (req, res, next) => {
     Sauce.find().then(
       (sauces) => {
@@ -33,7 +33,7 @@ exports.getAllSauces = (req, res, next) => {
       }
     );
   };
-//création et exportation du middleware pour récupérer une sauce avec la méthode findOne
+//création et exportation du controllers pour récupérer une sauce avec la méthode findOne
   exports.getOneSauce = (req, res, next) => {
     Sauce.findOne({
       _id: req.params.id
@@ -49,21 +49,33 @@ exports.getAllSauces = (req, res, next) => {
       }
     );
   };
-//création et exportation du middleware pour modifier une sauce avec la méthode updateOne
+//création et exportation du controllers pour modifier une sauce avec la méthode updateOne
   exports.modifySauce = (req, res, next) => {
-    //utilisation d'un oéprateur ternaire pour vérifier si il ya un fichier image 
+    //utilisation d'un opérateur ternaire pour vérifier si il ya un fichier image 
     const sauceObject = req.file ?
       {
         ...JSON.parse(req.body.sauce),
-        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
       } : { ...req.body };
       /*on compare en premier argument que _id soit égal à celui qui est envoyé dans les paramétre
       et en deuxiéme argument on indique la nouvelle version de l'objet en indiquant que l'Id reste le même*/
     Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
       .then(() => res.status(200).json({ message: 'Objet modifié !'}))
       .catch(error => res.status(400).json({ error }));
+      if (req.file = true){
+        Sauce.findOne({ _id: req.params.id})
+        .then((sauce) =>{
+          return sauce;
+        })
+        .then(sauce => {
+          const filename = sauce.imageUrl.split('/images/')[1];
+          fs.unlink(`images/${filename}`, () => {
+            console.log('images supprimée');
+          })
+        })
+      }
   };
-//creation et exportation du middleware pour supprimer une sauce
+//creation et exportation du controllers pour supprimer une sauce
   exports.deleteSauce = (req, res, next) => {
     //on récupère la sauce concernée avec la méthode findOne
     Sauce.findOne({ _id: req.params.id })
