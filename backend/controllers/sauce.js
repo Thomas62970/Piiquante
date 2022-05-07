@@ -51,30 +51,47 @@ exports.getAllSauces = (req, res, next) => {
   };
 //création et exportation du controllers pour modifier une sauce avec la méthode updateOne
   exports.modifySauce = (req, res, next) => {
+    Sauce.findOne({ _id: req.params.id })
+    .then((sauce) => {
+      if (!sauce) {
+        res.status(404).json({ error: new Error("Cette sauce n'existe pas !")});
+      }
+      // on compare Id de l'utilisateur de la sauce avec Id de l'utilisateur qui fait la requête
+      if (sauce.userId !== req.auth.userId) {
+        res.status(400).json({ error: new Error('Requête non autorisée !')});
+      }
+      return sauce;
+    })
+      .then(sauce => {
+        //on récupére le nom du fichier
+        const image = sauce.imageUrl
+        const nameImage = sauce.imageUrl.split('/images/')[1];
+        console.log(nameImage)
     //utilisation d'un opérateur ternaire pour vérifier si il ya un fichier image 
     const sauceObject = req.file ?
       {
         ...JSON.parse(req.body.sauce),
         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
       } : { ...req.body };
+      console.log(image)
+      console.log(sauceObject.imageUrl)
+      if(sauceObject.imageUrl != null){
+        fs.unlink(`images/${nameImage}`, () => {
+          Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
+      .then(() => res.status(200).json({ message: 'Objet modifié !'}))
+      .catch(error => res.status(400).json({ error }));
+        })
+      }
+      else{
       /*on compare en premier argument que _id soit égal à celui qui est envoyé dans les paramétre
       et en deuxiéme argument on indique la nouvelle version de l'objet en indiquant que l'Id reste le même*/
     Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
       .then(() => res.status(200).json({ message: 'Objet modifié !'}))
-      .catch(error => res.status(400).json({ error }));
-      if (req.file = true){
-        Sauce.findOne({ _id: req.params.id})
-        .then((sauce) =>{
-          return sauce;
-        })
-        .then(sauce => {
-          const filename = sauce.imageUrl.split('/images/')[1];
-          fs.unlink(`images/${filename}`, () => {
-            console.log('images supprimée');
-          })
-        })
-      }
-  };
+      .catch(error => res.status(400).json({ error }));}
+    })
+  }
+
+
 //creation et exportation du controllers pour supprimer une sauce
   exports.deleteSauce = (req, res, next) => {
     //on récupère la sauce concernée avec la méthode findOne
