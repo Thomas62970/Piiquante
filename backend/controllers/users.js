@@ -42,7 +42,7 @@ exports.signup = (req, res, next) => {
               //on utilise jsonwebtoken pour créer le token avec id de l'utilisateur la phrase secrète
               token: jwt.sign(
                 { userId: user._id },
-                'RANDOM_TOKEN_SECRET',
+                process.env.cleToken,
                 //on indique le temps de validation du token créer
                 { expiresIn: '24h' }
               )

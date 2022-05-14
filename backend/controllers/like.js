@@ -6,33 +6,49 @@ exports.likeSauce = (req, res, next) => {
     //on récupére le status du like l'Id de la sauce concerné et l'utilisateur qui donne son avis
     const likeStatus = req.body.like;
     const sauceId = req.params.id;
-    const userId = req.body.userId;
+    const userId = req.auth.userId
     //utilisation de switch qui nous permet d'utilisé un code spécifique à chaque condition
     switch(likeStatus) {
         //si l'utilisateur like 
         case 1:
-            //on selctionne la sauce concernée grace a son Id
-            Sauce.updateOne({ _id: sauceId}, { 
-                //on ajoute 1 dans le tableau à likes
-                $inc: { likes: +1 }, 
-                //on ajoute l'Id de l'utilisateur dans le tableau 
-                $push: { usersLiked: req.body.userId }
+            //on récupère la sauce concernée
+            Sauce.findOne({ _id: sauceId})
+            .then(sauce => {
+                //si l'utilisateur à déja like ou dislike on lui envoie une erreur
+                if(sauce.usersLiked.includes(userId) || sauce.usersDisliked.includes(userId)){
+                    res.status(403).json({ message: "requête impossible !"})
+                }
+                //sinon on l'autorise à like
+                else{
+                    Sauce.updateOne({ _id: sauceId}, {
+                        //on ajoute 1 dans le tableau à likes
+                        $inc: { likes: +1 },
+                        //on ajoute l'Id de l'utilisateur dans le tableau 
+                        $push: { usersLiked: userId }
+                    })
+                    .then(() => res.status(201).json({ message: "Ajout d'un like ! "}))
+                    .catch(error => res.status(400).json({ error }));
+                }
             })
-            .then(() => res.status(201).json({ message: 'Ajout du like !'}))
-            .catch(error => res.status(400).json({ error }));
-            //on utilise break à chaque fin de condition pour indiquer qu'il peut sortir du switch
             break;
             //si l'utilisateur dislike 
         case -1:
-            //on selctionne la sauce concernée grace a son Id
-            Sauce.updateOne({ _id: sauceId}, {
-                //on ajoute 1 dans le tableau à dislikes
-                $inc: { dislikes: +1 },
-                //on ajoute l'Id de l'utilisateur dans le tableau 
-                $push: { usersDisliked: req.body.userId }
+            Sauce.findOne({ _id: sauceId})
+            .then(sauce => {
+                if(sauce.usersDisliked.includes(userId) || sauce.usersLiked.includes(userId)){
+                    res.status(403).json({ message: "requête impossible !"})
+                }
+                else{
+                    Sauce.updateOne({ _id: sauceId}, {
+                        //on ajoute 1 dans le tableau à dislikes
+                        $inc: { dislikes: +1 },
+                        //on ajoute l'Id de l'utilisateur dans le tableau 
+                        $push: { usersDisliked: userId }
+                    })
+                    .then(() => res.status(201).json({ message: "Ajout d'un dislike ! "}))
+                    .catch(error => res.status(400).json({ error }));
+                }
             })
-            .then(() => res.status(201).json({ message: "Ajout d'un dislike ! "}))
-            .catch(error => res.status(400).json({ error }));
             break;
         case 0:
             //si l'utilisateur retire son like ou son dislike on récupére la sauce concernée grace a son Id

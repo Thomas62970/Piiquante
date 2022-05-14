@@ -1,3 +1,6 @@
+//utilisation de dotenv pour masquer le contenu sensible
+require('dotenv').config();
+//console.log(process.env)
 //importation d'express
 const express = require('express');
 //creation d'une application express
@@ -8,11 +11,13 @@ const mongoose = require('mongoose');
 const path = require('path');
 //importation de cors
 const cors = require('cors');
+//utilisation d'express-rate-limit pour limiter le nombre de requête 
+const limite_req = require('express-rate-limit');
 //importation deqs routes 
 const userRoutes = require('./routes/users');
 const sauceRoutes = require('./routes/sauce');
 //utilisation de mongoose pour la connexion à MongoDB
-mongoose.connect('mongodb+srv://Thomas:toto62970@cluster0.ego3j.mongodb.net/myFirstDatabase?retryWrites=true&w=majority',
+mongoose.connect(`mongodb+srv://${process.env.utilisateurMongo}:${process.env.motDePasseMongo}@${process.env.clusterMongo}.mongodb.net/${process.env.nomMongo}?retryWrites=true&w=majority`,
   { useNewUrlParser: true,
     useUnifiedTopology: true })
   .then(() => console.log('Connexion à MongoDB réussie !'))
@@ -29,6 +34,14 @@ app.use((req, res, next) => {
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     next();
   });
+  //configuration d'express-rate-limit
+  const limite = limite_req({
+    windowMs: 15 * 60 * 1000,
+    max: 2000,
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
+  app.use(limite);
 /*on attribue un middleware à chaque routes 
 on utilise express static pour gerer la gestion des images*/
   app.use('/images', express.static(path.join(__dirname, 'images')));
